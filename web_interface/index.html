@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=2\">
+  <title>LED control</title>
+  <link rel=\"icon\" href=\"data:,\">
+</head>
+
+<body>
+
+  <h1 id="LEDSTATE">LED strip</h1> State:
+  <hr>
+  <span id="textSliderValue">%TEXTSLIDER%</span>
+    <form>
+      <input type='range' min='0' max="255" step="1" class="slider" value="%SLIDERBR%" id="brt">
+    </form>
+    <p>
+    Choose range of leds
+  </p>
+    <p>
+      From:<input type="number" value=0 onchange="SendValue(this);" oninput="CheckMinValue(this); " id="startled">
+      To:<input type="number" value= 300 onchange="SendValue(this);" oninput="CheckMaxValue(this); " id="endled" >
+    </p>
+  <p><label for="colorpicker">Color Picker:</label>
+    <input type="color" id="colorpicker" onchange="SendValue(this);" value=#f6b73c>
+  </p>
+</hr>
+  <div>
+    <p>
+       <button value="2" onclick=LEDmodeset(this);>Rainbow Fade</button>
+       <button value="3" onclick=LEDmodeset(this);>Rainbow Loop</button>
+       <button value="4" onclick=LEDmodeset(this);>Random Burst</button>
+       <button value="14" onclick=LEDmodeset(this);>Random March</button>
+   </p>
+    <p>
+      <button value="5" onclick=LEDmodeset(this);>Color Bounce</button>
+      <button value="6" onclick=LEDmodeset(this);>Color Bounce(with fade)</button>
+      <button value="900" onclick=LEDmodeset(this);>Reaction to Music</button>
+      <button value="9" onclick=LEDmodeset(this);>Flicker</button>
+    </p>
+    <p>
+      <button value="30" onclick=LEDmodeset(this);>New rainbow loop</button>
+      <button value="13" onclick=LEDmodeset(this);>Cell Auto</button>
+      <button value="23" onclick=LEDmodeset(this);>Vertical rainbow</button>
+      <button value="23" onclick=LEDmodeset(this);>Vertical rainbow</button>
+    </p>
+    <p>
+      <button value="23" onclick=LEDmodeset(this);>Vertical rainbow</button>
+      <button value="25" onclick=LEDmodeset(this);>Random color pop</button>
+      <button value="37" onclick=LEDmodeset(this);>Rainbow cycle</button>
+      <button value="38" onclick=LEDmodeset(this);>Rainbow twinkle</button>
+    </p>
+    <p>
+      <button value="39" onclick=LEDmodeset(this);>Running lights</button>
+      <button value="40" onclick=LEDmodeset(this);>Sparkle</button>
+      <button value="41" onclick=LEDmodeset(this);>Snow Sparkle</button>
+      <button value="42" onclick=LEDmodeset(this);>Theater chase</button>
+    </p>
+    <p>
+      <button value="43" onclick=LEDmodeset(this);>Theather chase RGB</button>
+      <button value="44" onclick=LEDmodeset(this);>Strobe</button>
+    </p>
+  </div>
+</body>
+
+<script>
+  function compareValue(min, max) {
+    var i = min.value;
+    var z = max.value;
+    if (i > z) {
+
+    } else if (z < i) {
+
+    }
+
+  }
+  var slider = document.getElementById("brt");
+  var xhr = new XMLHttpRequest();
+  document.getElementById("textSliderValue").onload = function() {
+  slider.innerHTML = this.responseText;
+  xhr.open("GET", "/brightness_get", true);
+  xhr.send();
+ }
+ slider.onchange = function updateSliderPWM(element) {
+ var sliderValue = document.getElementById("brt").value;
+  document.getElementById("textSliderValue").innerHTML = sliderValue;
+  xhr.open("GET", "/brightness?value="+sliderValue, true);
+  xhr.send();
+  }
+
+  function LEDmodeset(element) {
+    var mode = element.value;
+    xhr.open("GET", "/setmode?mode="+mode, true);
+    xhr.send();
+  }
+  function CheckMinValue(element) {
+    var i = element.value;
+    if (i < 300) {
+      element.value=0;
+    }
+  }
+  function CheckMaxValue(element) {
+    var i = element.value;
+    if (i > 300) {
+      element.value=300;
+    }
+  }
+  function SendValue(element) {
+    var color = document.getElementById('colorpicker').value;
+    color = color.replace("#", "");
+    if (element.id == "colorpicker") {
+      xhr.open("GET", "/customcolor?hex="+color, true);
+      xhr.send();
+    } else {
+      var max = document.getElementById("endled").value;
+      var min = document.getElementById("startled").value;
+      xhr.open("GET", "/customcolor?max="+max+"&min="+min+"&hex="+color, true);
+      xhr.send();
+      }
+  }
+</script>
+</html>
