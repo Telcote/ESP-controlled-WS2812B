@@ -179,12 +179,3 @@ void change_mode(int newmode) {
   one_color_all(0, 0, 0);
   ledMode = newmode;
 }
-
-
-
-
-void CycleModes(){
-  if (++modeCounter >= num_modes_count) modeCounter = 0;
-  ledMode = num_modes[modeCounter];
-  change_mode(ledMode);
-}
