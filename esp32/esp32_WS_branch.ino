@@ -92,7 +92,7 @@ AsyncWebSocket ws("/ws");
 
 String getElementValues(){
   elementValues["brt"] = String(sliderValue);
-  elementValues["colorpicker"] = String(color);
+  elementValues["colorpicker"] = color;
 //  elementValues["elementValue3"] = String();
 
   String jsonString = JSON.stringify(elementValues);
@@ -126,7 +126,12 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     }    
     if (message.indexOf("colorpicker") >= 0) {
       inputMessage1 = message.substring(11);
-      Serial.println(inputMessage1);
+      color = HEXsign + inputMessage1;
+      str = (char*) inputMessage1.c_str();
+      sscanf(str, "%02x%02x%02x", &r, &g, &b);
+      one_color_all(r,g,b);
+      if (ledMode !=255 ) ledMode = 255;
+      LEDS.show();
       notifyClients(getElementValues());
     }
     if (strcmp((char*)data, "getValues") == 0) {
@@ -233,20 +238,6 @@ void setup() {
 
   server.serveStatic("/", SPIFFS, "/");
 
-// Change brightness 
-//  server.on("/brightness", HTTP_GET, [](AsyncWebServerRequest *request) {
-//     String inputMessage;
-//     if (request->hasParam("value")) {
-//      inputMessage = request->getParam("value")->value();
-//      sliderValue = inputMessage;
-//      LEDS.setBrightness(sliderValue.toInt());
-//      LEDS.show();
-//    }
-////    Serial.print("Brightness is: ");
-////    Serial.println(inputMessage);
-//    request->send(200);
-//  });
-
 // Custom color  
   server.on("/customcolor", HTTP_GET, [](AsyncWebServerRequest *request) {
     
@@ -260,16 +251,15 @@ void setup() {
       sscanf(str, "%02x%02x%02x", &r, &g, &b);
       one_color_range(r, g, b, fromled, toled);
       LEDS.show();
-//      Serial.println("range of leds");
     }else if (request->hasParam("hex")) {
       inputMessage2 = request->getParam("hex")->value();
       color = HEXsign + inputMessage2;
-//      Serial.println(color);
+
       str = (char*) inputMessage2.c_str();
       sscanf(str, "%02x%02x%02x", &r, &g, &b);
-//      Serial.println("custom color");
+
       one_color_all(r,g,b);
-      if (ledMode != 999) ledMode = 999;
+      if (ledMode != 255) ledMode = 255;
       LEDS.show();
       } 
     request->send(200);
@@ -303,7 +293,8 @@ void loop() {
   // LED mode switch 
 
       switch (ledMode) {
-        case 999: lastState="OFF"; color = "#000000"; break;                           // пазуа
+        case 999: lastState="OFF"; color = "#000000"; break;
+        case 255: lastState="Custom color"; break;// пазуа
         case  2: rainbow_fade(); lastState="Rainbow Fade"; break;            // плавная смена цветов всей ленты
         case  3: rainbow_loop(); lastState="Rainbow loop"; break;            // крутящаяся радуга
         case  4: random_burst(); lastState="Random brust"; break;            // случайная смена цветов
