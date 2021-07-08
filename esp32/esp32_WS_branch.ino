@@ -159,35 +159,6 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
   }
 }
 
-// ***********************************************************************************
-// Sliders and buttons proccesor
-String processor(const String& var){
-  if (var == "SLIDERBR"){
-    return sliderValue;
-  }
-  
-  if (var == "TEXTSLIDER") {
-    return sliderValue;
-  }
-  
-  if (var == "LEDSTATE") {
-    return lastState;
-  }
-
-  if (var == "TOLED") {
-    String TOLED = String(toled);
-    return TOLED;
-  }
-
-  if (var == "FROMLED") {
-    String FROMLED = String(fromled);
-    return FROMLED;
-  }
-
-  if (var == "CURRENTCOLOR") {
-    return color;
-  }
-}
 
 
 IPAddress local_IP(192, 168, 1, 184);
@@ -251,17 +222,7 @@ void setup() {
       sscanf(str, "%02x%02x%02x", &r, &g, &b);
       one_color_range(r, g, b, fromled, toled);
       LEDS.show();
-    }else if (request->hasParam("hex")) {
-      inputMessage2 = request->getParam("hex")->value();
-      color = HEXsign + inputMessage2;
-
-      str = (char*) inputMessage2.c_str();
-      sscanf(str, "%02x%02x%02x", &r, &g, &b);
-
-      one_color_all(r,g,b);
-      if (ledMode != 255) ledMode = 255;
-      LEDS.show();
-      } 
+    } 
     request->send(200);
   });
 
@@ -273,8 +234,6 @@ void setup() {
       
       ledMode = LEDmodevalue.toInt();
       change_mode(ledMode);
-//      Serial.print("Led mode is: ");
-//      Serial.println(ledMode);
 
   }
     request->send(200);
