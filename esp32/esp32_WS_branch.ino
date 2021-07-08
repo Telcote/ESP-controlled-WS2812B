@@ -3,6 +3,7 @@
 #include "AsyncTCP.h"
 #include "WiFiUdp.h"
 #include "SPIFFS.h"
+#include "Arduino_JSON.h"
 #include "ESPAsyncWebServer.h"
 #define FASTLED_INTERRUPT_RETRY_COUNT 1
 #include "FastLED.h"
@@ -35,6 +36,7 @@ String inputMessage1;
 String inputMessage2;
 String inputMessage3;
 char *str;
+String message = "";
 int toled = LED_COUNT;
 int fromled = 0;
 String color = "#000000";
@@ -78,7 +80,7 @@ String lastState = "OFF";
  CRGBPalette16 gTargetPalette( gGradientPalettes[0] );
 
 
-
+JSONVar elementValues;
 
   
 // ***********************************************************************************
@@ -86,6 +88,16 @@ String lastState = "OFF";
 AsyncWebServer server(80);
 WiFiUDP port;
 AsyncWebSocket ws("/ws");
+
+
+String getElementValues(){
+  elementValues["brt"] = String(sliderValue);
+  elementValues["colorpicker"] = String(color);
+//  elementValues["elementValue3"] = String();
+
+  String jsonString = JSON.stringify(elementValues);
+  return jsonString;
+}
 
 
 // ***********************************************************************************
@@ -99,9 +111,26 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    if (strcmp((char*)data, "toggle") == 0) {
-//     ledState = !ledState;
-      notifyClients(HEXsign);
+    message = (char*)data;
+    if (message.indexOf("LEDstate") >= 0) {
+      inputMessage1 = message.substring(8);
+      Serial.println(inputMessage1);
+      notifyClients(getElementValues());
+    }
+    if (message.indexOf("brt") >= 0) {
+      sliderValue = message.substring(3);
+      Serial.println(sliderValue);
+      LEDS.setBrightness(sliderValue.toInt());
+      LEDS.show();
+      notifyClients(getElementValues());
+    }    
+    if (message.indexOf("colorpicker") >= 0) {
+      inputMessage1 = message.substring(11);
+      Serial.println(inputMessage1);
+      notifyClients(getElementValues());
+    }
+    if (strcmp((char*)data, "getValues") == 0) {
+      notifyClients(getElementValues());
     }
   }
 }
@@ -165,15 +194,11 @@ IPAddress subnet(255, 255, 0, 0);
 // WiFi setup
 void setup() {
   Serial.begin(115200); // Serial port rate
-  
-    if(!SPIFFS.begin()){
-        Serial.println("SPIFFS Mount Failed");
-        return;
-    }
-  btStop();
-  if (!WiFi.config(local_IP, gateway, subnet)) {
-    Serial.println("STA Failed to configure");
+  if(!SPIFFS.begin()){
+    Serial.println("SPIFFS Mount Failed");
+    return;
   }
+  btStop();
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);
   WiFi.begin(ssid, password);
@@ -206,25 +231,21 @@ void setup() {
     request->send(SPIFFS, "/index.html", String(), false, processor);
   });
 
+  server.serveStatic("/", SPIFFS, "/");
+
 // Change brightness 
-  server.on("/brightness", HTTP_GET, [](AsyncWebServerRequest *request) {
-     String inputMessage;
-     if (request->hasParam("value")) {
-      inputMessage = request->getParam("value")->value();
-      sliderValue = inputMessage;
-      LEDS.setBrightness(sliderValue.toInt());
-      LEDS.show();
-    }
-    else {
-      inputMessage = "No message sent";
-    }
-//    Serial.print("Brightness is: ");
-//    Serial.println(inputMessage);
-    request->send(200, "text/plain", "OK");
-  });
-  server.on("/brightness_get", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", sliderValue.c_str());
-  });
+//  server.on("/brightness", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     String inputMessage;
+//     if (request->hasParam("value")) {
+//      inputMessage = request->getParam("value")->value();
+//      sliderValue = inputMessage;
+//      LEDS.setBrightness(sliderValue.toInt());
+//      LEDS.show();
+//    }
+////    Serial.print("Brightness is: ");
+////    Serial.println(inputMessage);
+//    request->send(200);
+//  });
 
 // Custom color  
   server.on("/customcolor", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -266,9 +287,8 @@ void setup() {
 //      Serial.println(ledMode);
 
   }
-    request->send(200, "text/plain", "OK");
+    request->send(200);
   });
-
 
 // ***********************************************************************************
 // Start server
