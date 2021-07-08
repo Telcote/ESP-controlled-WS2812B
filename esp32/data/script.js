@@ -1,8 +1,4 @@
 
-// document.getElementById("brt").onchange = function UpdateValueSlider() {
-// document.getElementById("textSliderValue").innerHTML = document.getElementById("brt").value;
-// sendElementValue(document.getElementById("brt"));
-// }
 
 var xhr = new XMLHttpRequest();
 
@@ -34,19 +30,7 @@ function compareValue(min, max) {
   }
 
 }
-function SendValue(element) {
-  var color = document.getElementById('colorpicker').value;
-  color = color.replace("#", "");
-  if (element.id == "colorpicker") {
-    xhr.open("GET", "/customcolor?hex="+color, true);
-    xhr.send();
-  } else {
-    var max = document.getElementById("endled").value;
-    var min = document.getElementById("startled").value;
-    xhr.open("GET", "/customcolor?max="+max+"&min="+min+"&hex="+color, true);
-    xhr.send();
-    }
-}
+
 
 var gateway = `ws://${window.location.hostname}/ws`;
 var websocket;
