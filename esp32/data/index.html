@@ -1,30 +1,29 @@
-<!DOCTYPE html>
 <html>
 
 <head>
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=2\">
+  <meta name="viewport" content="width=device-width, initial-scale=2">
   <title>LED control</title>
-  <link rel=\"icon\" href=\"data:,\">
+  <link rel="icon" href="data:,">
 </head>
 
 <body>
 
   <h1 id="LEDState"></h1>
-  <hr>
-  <span id="brtValue"></span>
-    <form>
-      <input type='range' min='0' max="255" step="1" class="slider" value="" id="brt" onchange=sendElementValue(this);>
-    </form>
+ <hr>
+ <span id="brtValue"></span>
+   <form>
+     <input type='range' min='0' max="255" step="1" class="slider" value="" id="brt" onchange=sendElementValue(this);>
+   </form>
     <p>
     Choose range of leds
   </p>
-    <p>
-      From:<input type="number" value=0 onchange="SendValue(this);" oninput="CheckMinValue(this); " id="startled">
-      To:<input type="number" value= 300 onchange="SendValue(this);" oninput="CheckMaxValue(this); " id="endled" >
-    </p>
-  <p><label for="colorpicker">Color Picker:</label>
-    <input type="color" id="colorpicker" onchange="sendElementValue(this);" value="">
+  <p>
+    From:<input type="number" value=0 onchange="SendValue(this);" oninput="CheckMinValue(this); " id="startled">
+    To:<input type="number" value= 300 onchange="SendValue(this);" oninput="CheckMaxValue(this); " id="endled" >
   </p>
+<p><label for="colorpicker">Color Picker:</label>
+  <input type="color" id="colorpicker" onchange="sendElementValue(this);" value="">
+</p>
 </hr>
   <div>
     <p>
@@ -42,14 +41,12 @@
     <p>
       <button value="30" onclick=LEDmodeset(this);>New rainbow loop</button>
       <button value="13" onclick=LEDmodeset(this);>Cell Auto</button>
-      <button value="23" onclick=LEDmodeset(this);>Vertical rainbow</button>
-      <button value="23" onclick=LEDmodeset(this);>Vertical rainbow</button>
     </p>
     <p>
       <button value="23" onclick=LEDmodeset(this);>Vertical rainbow</button>
       <button value="25" onclick=LEDmodeset(this);>Random color pop</button>
       <button value="37" onclick=LEDmodeset(this);>Rainbow cycle</button>
-      <button value="38" onclick=LEDmodeset(this);>Rainbow twinkle</button>
+
     </p>
     <p>
       <button value="39" onclick=LEDmodeset(this);>Running lights</button>
@@ -60,8 +57,13 @@
     <p>
       <button value="43" onclick=LEDmodeset(this);>Theather chase RGB</button>
       <button value="44" onclick=LEDmodeset(this);>Strobe</button>
+      <button value="45" onclick=LEDmodeset(this);>Gradient Lights</button>
+      <button value="46" onclick=LEDmodeset(this);>Holiday Lights</button>
+    </p>
+    <p>
+     <button value="999" onclick=LEDmodeset(this);>OFF</button>
     </p>
   </div>
 </body>
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </html>
