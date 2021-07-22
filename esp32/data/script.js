@@ -7,6 +7,8 @@ function LEDmodeset(element) {
   xhr.open("GET", "/setmode?mode="+mode, true);
   xhr.send();
 }
+
+
 function CheckMinValue(element) {
   var i = element.value;
   if (i < 0) {
