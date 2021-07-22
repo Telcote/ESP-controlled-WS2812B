@@ -1,4 +1,6 @@
 #include "WiFi.h"
+#include "IRrecv.h"
+#include "IRutils.h"
 #include "ArduinoOTA.h"
 #include "AsyncTCP.h"
 #include "WiFiUdp.h"
@@ -50,6 +52,10 @@ int EVENODD = LED_COUNT % 2;
 struct CRGB leds[LED_COUNT];
 int ledsX[LED_COUNT][3];     //-ARRAY FOR COPYING WHATS IN THE LED STRIP CURRENTLY (FOR CELL-AUTOMATA, MARCH, ETC)
 
+byte num_modes[] = {2,3,4,5,6,9,13,14,23,25,30,37,39,40,41,42,43,44,45,46};
+volatile int modeCounter;
+byte num_modes_count = sizeof(num_modes);
+
 int thisdelay = 20;          //-FX LOOPS DELAY VAR
 int thisstep = 10;           //-FX LOOPS DELAY VAR
 int thishue = 0;             //-FX LOOPS DELAY VAR
@@ -82,6 +88,10 @@ String lastState = "OFF";
 
 JSONVar elementValues;
 
+
+IRrecv irrecv(33);
+decode_results results;
+
   
 // ***********************************************************************************
 // Network init
@@ -93,7 +103,6 @@ AsyncWebSocket ws("/ws");
 String getElementValues(){
   elementValues["brt"] = String(sliderValue);
   elementValues["colorpicker"] = color;
-//  elementValues["elementValue3"] = String();
 
   String jsonString = JSON.stringify(elementValues);
   return jsonString;
@@ -112,11 +121,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     message = (char*)data;
-    if (message.indexOf("LEDstate") >= 0) {
-      inputMessage1 = message.substring(8);
-      Serial.println(inputMessage1);
-      notifyClients(getElementValues());
-    }
     if (message.indexOf("brt") >= 0) {
       sliderValue = message.substring(3);
       Serial.println(sliderValue);
@@ -125,7 +129,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       notifyClients(getElementValues());
     }    
     if (message.indexOf("colorpicker") >= 0) {
-      inputMessage1 = message.substring(11);
+      inputMessage1 = message.substring(12);
       color = HEXsign + inputMessage1;
       str = (char*) inputMessage1.c_str();
       sscanf(str, "%02x%02x%02x", &r, &g, &b);
@@ -160,7 +164,6 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 }
 
 
-
 IPAddress local_IP(192, 168, 1, 184);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 0, 0);
@@ -180,7 +183,6 @@ void setup() {
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-//    Serial.println("Connecting to WiFi..");
   }
 
   Serial.println(WiFi.localIP());
@@ -191,6 +193,7 @@ void setup() {
   LEDS.setBrightness(sliderValue.toInt());
   memset(leds, 0,  LED_COUNT * sizeof(struct CRGB));
   change_mode(0);
+
 
 // ***********************************************************************************
 // OTA update handler
@@ -234,16 +237,14 @@ void setup() {
       
       ledMode = LEDmodevalue.toInt();
       change_mode(ledMode);
-
   }
     request->send(200);
   });
 
-// ***********************************************************************************
-// Start server
   server.begin();
 
-    
+  irrecv.enableIRIn();
+      
 } //Setup end
 
 
@@ -281,12 +282,44 @@ void loop() {
     
   ws.cleanupClients();
   
-  if (WiFi.status() == 6) {
+  if (WiFi.status() == WL_DISCONNECTED) {
       while (WiFi.status() != WL_CONNECTED) {
       delay(1000);
       Serial.println("Reconnecting to WiFi..");
       }
-      Serial.println(WiFi.localIP());
     }
     ArduinoOTA.handle();
+
+// ***********************************************************************************
+// IR handler
+   if (irrecv.decode(&results)) {
+    switch(results.value){
+      case 0xFFE01F: break;    //On
+      case 0xFF609F: change_mode(999); break;    //Off
+      case 0xFF00FF: {int bright = sliderValue.toInt(); bright+=10; if(bright > 255){bright = 255;} sliderValue=String(bright); FastLED.setBrightness(bright); FastLED.show(); break;}    //Dim up
+      case 0xFF40BF: {int bright = sliderValue.toInt(); bright-=10; if(bright < 0){bright = 0;} sliderValue=String(bright); FastLED.setBrightness(bright); FastLED.show();   break;}    //Dim down
+      case 0xFF10EF: change_mode(255); one_color_all(255,0,0); FastLED.show();     break;    //Red
+      case 0xFF906F: change_mode(255); one_color_all(0,255,0); FastLED.show();     break;    //Green
+      case 0xFF50AF: change_mode(255); one_color_all(0,0,255); FastLED.show();     break;    //Blue
+      case 0xFFC03F: change_mode(255); one_color_all(255,255,255); FastLED.show(); break;    //White
+      case 0xFF30CF: change_mode(255); one_color_all(255,69,0); FastLED.show(); break;    //Orange-red
+      case 0xFFB04F: change_mode(255); one_color_all(144,238,144); FastLED.show(); break;    //Light-green
+      case 0xFF708F: change_mode(255); one_color_all(173,216,230); FastLED.show(); break;    //Light-blue
+      case 0xFF08F7: change_mode(255); one_color_all(255,165,0); FastLED.show(); break;    //Orange
+      case 0xFF8877: change_mode(255); one_color_all(0,206,209); FastLED.show(); break;    //Cyan
+      case 0xFF48B7: change_mode(255); one_color_all(82,0,82); FastLED.show(); break;    //Dark-purple
+      case 0xFF28D7: change_mode(255); one_color_all(255,165,0); FastLED.show(); break;    //Yellow-orange
+      case 0xFFA857: change_mode(255); one_color_all(32,178,170); FastLED.show(); break;    //Greenish-blue
+      case 0xFF6897: change_mode(255); one_color_all(128,0,128); FastLED.show(); break;    //Purple
+      case 0xFF18E7: change_mode(255); one_color_all(255,255,0); FastLED.show(); break;    //Yellow
+      case 0xFF9867: change_mode(255); one_color_all(0,139,139); FastLED.show(); break;    //Dark-greenish-blue
+      case 0xFF58A7: change_mode(255); one_color_all(255,20,147); FastLED.show(); break;    //Pink
+      case 0xFFF00F: change_mode(45); break;    //Mode: Flashing lights
+      case 0xFFC837: change_mode(44); break;    //Mode: Strobe
+      case 0xFFE817: change_mode(2); break;    //Mode: Fade
+      case 0xFFD827: CycleModes(); break;    //Cycle through modes
+    }
+    irrecv.resume();
+  }
+   
  } //Loop end
