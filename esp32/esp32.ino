@@ -22,8 +22,8 @@
 // ***********************************************************************************
 // Integers and constants
 // WiFi data
-const char* ssid = "HOME";
-const char* password =  "40ue6307";
+const char* ssid = "SSID";
+const char* password =  "PASSWORD";
 unsigned int localPort = 7777;
 
 //LED setup vars
