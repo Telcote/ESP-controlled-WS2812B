@@ -204,7 +204,7 @@ void setup() {
 
 // Web Page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", String(), false, processor);
+    request->send(SPIFFS, "/index.html", String(), false);
   });
 
   server.serveStatic("/", SPIFFS, "/");
